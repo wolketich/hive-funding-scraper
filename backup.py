@@ -64,17 +64,16 @@ class FundingResult:
     data_id: str
 
 @dataclass
-class FundingScheduleRow:
+class PaymentScheduleRow:
     provider_id: str
     provider_name: str
     funding_type: str
     run_date: str
     pay_until: str
-    total_due_upto: str
+    total_due_to_date: str
     due_this_period: str
-    payable: str
-    total_due_incl: str
-    allocation_link: str
+    payable_this_period: str
+    total_due_incl_period: str
 
 
 class EarlyYearsHiveFundingFinder:
@@ -110,6 +109,7 @@ class EarlyYearsHiveFundingFinder:
 
         self.results: List[FundingResult] = []
         self.provider_ids: List[str] = []
+        self.schedules: List[PaymentScheduleRow] = []
 
     def _handle_cookie_consent(self) -> None:
         try:
@@ -226,6 +226,39 @@ class EarlyYearsHiveFundingFinder:
             logger.error(f"Error finding funding table: {str(e)}")
             return None
 
+    def scrape_payment_schedule(self, result: FundingResult) -> List[PaymentScheduleRow]:
+        schedule_url = f"https://earlyyearshive.ncs.gov.ie/programmefunding/schedule/?bid={result.data_id}"
+        self.driver.get(schedule_url)
+
+        try:
+            WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "#dtBasic tbody tr"))
+            )
+            time.sleep(1)
+
+            rows = self.driver.find_elements(By.CSS_SELECTOR, "#dtBasic tbody tr")
+            schedule_data = []
+            for row in rows:
+                cols = row.find_elements(By.TAG_NAME, "td")
+                if len(cols) < 8:
+                    continue
+                schedule_data.append(PaymentScheduleRow(
+                    provider_id=result.provider_id,
+                    provider_name=result.provider_name,
+                    funding_type=result.funding_type,
+                    run_date=cols[1].text.strip(),
+                    pay_until=cols[2].text.strip(),
+                    total_due_to_date=cols[3].text.strip(),
+                    due_this_period=cols[4].text.strip(),
+                    payable_this_period=cols[5].text.strip(),
+                    total_due_incl_period=cols[6].text.strip(),
+                ))
+            return schedule_data
+        except Exception as e:
+            logger.error(f"Failed to scrape schedule for data_id={result.data_id}: {str(e)}")
+            return []
+
+
     def check_table_for_funding(self, provider_name: str, provider_id: str) -> List[FundingResult]:
         results = []
         try:
@@ -333,6 +366,36 @@ class EarlyYearsHiveFundingFinder:
 
         return results
 
+    def save_schedules(self, filename: Optional[str] = None) -> None:
+        if not self.schedules:
+            logger.warning("No payment schedules to save")
+            return
+        if not filename:
+            filename = f"payment_schedules_{OUTPUT_TIMESTAMP}.csv"
+        try:
+            data = [
+                {
+                    "Provider ID": s.provider_id,
+                    "Provider Name": s.provider_name,
+                    "Funding Type": s.funding_type,
+                    "Run Date": s.run_date,
+                    "Pay Until": s.pay_until,
+                    "Total Due To Date": s.total_due_to_date,
+                    "Due This Period": s.due_this_period,
+                    "Payable This Period": s.payable_this_period,
+                    "Total Due Including Period": s.total_due_incl_period,
+                }
+                for s in self.schedules
+            ]
+            df = pd.DataFrame(data)
+            df.to_csv(filename, index=False)
+            df.to_excel(filename.replace(".csv", ".xlsx"), index=False)
+
+            logger.info(f"Payment schedules saved to {filename}")
+        except Exception as e:
+            logger.error(f"Error saving schedules: {str(e)}")
+
+
 
     def save_results(self, filename: Optional[str] = None) -> None:
         if not self.results:
@@ -373,7 +436,13 @@ class EarlyYearsHiveFundingFinder:
                 results = self.search_funding_for_provider(provider_id)
                 self.results.extend(results)
 
+                for r in results:
+                    schedule_rows = self.scrape_payment_schedule(r)
+                    self.schedules.extend(schedule_rows)
+                    logger.info(f"Scraped {len(schedule_rows)} payment schedule rows for {r.provider_name}")
+                
             self.save_results()
+            self.save_schedules()
 
         except KeyboardInterrupt:
             logger.warning("Script interrupted by user")
