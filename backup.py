@@ -63,6 +63,19 @@ class FundingResult:
     funding_type: str
     data_id: str
 
+@dataclass
+class FundingScheduleRow:
+    provider_id: str
+    provider_name: str
+    funding_type: str
+    run_date: str
+    pay_until: str
+    total_due_upto: str
+    due_this_period: str
+    payable: str
+    total_due_incl: str
+    allocation_link: str
+
 
 class EarlyYearsHiveFundingFinder:
     def __init__(self, headless: bool = False):
