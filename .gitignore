@@ -182,3 +182,21 @@ cython_debug/
 
 # Error SCreenshots
 *.png
+
+# MacOS
+.DS_Store
+# Windows
+Thumbs.db
+ehthumbs.db
+# Linux
+*~
+# Visual Studio Code
+.vscode/
+# Visual Studio Code settings
+.vscode-test/
+# Visual Studio Code extensions
+.vscode/extensions.json
+# Visual Studio Code workspace settings
+.vscode/settings.json
+# Visual Studio Code workspace storage
+.vscode/workspaceStorage/

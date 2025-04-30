@@ -474,9 +474,6 @@ class EarlyYearsHiveScraper:
                 lambda d: d.execute_script('return document.querySelector("#current_ServiceProviderID").value') == provider_id
             )
             
-            # Handle cookie consent if it appears
-            self._handle_cookie_consent()
-            
             # Step 2: Go to payments page
             self.driver.get("https://earlyyearshive.ncs.gov.ie/all-payments-issued/")
             
