@@ -73,7 +73,7 @@ SHORTCODE_SORT_ORDER = [
     "KY",  # KINSEALY
     "SC",  # SCHOLARSTOWN
     "BW",  # BLACKWOOD
-    "BH",  # BARNHALL
+    "Ltd-BH",  # BARNHALL (edge case: Wrong Name on HIVE)
     "LW",  # LEDWELL
     "NB",  # NEWBRIDGE
     "GS",  # GREYSTONES
@@ -98,7 +98,7 @@ SHORTCODE_TO_NAME = {
     "KY": "KINSEALY",
     "SC": "SCHOLARSTOWN",
     "BW": "BLACKWOOD",
-    "BH": "BARNHALL",
+    "Ltd-BH": "BARNHALL",
     "LW": "LEDWELL",
     "NB": "NEWBRIDGE",
     "GS": "GREYSTONES",
