@@ -172,3 +172,13 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Excel / CSV files
+*.csv
+*.xlsx
+*.xls
+*.xlsm
+*.xlsb
+
+# Error SCreenshots
+*.png
